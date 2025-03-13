@@ -8,7 +8,7 @@ In `.github/workflows/deploy.yml`
 ```yaml
 name: "gha-dkim deployer"
 on:
-  pull_request:
+  push:
     branches:
       - main
 
