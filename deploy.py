@@ -5,6 +5,11 @@ GitHub Action for continuous deployment with DKIM authentication
 
 Usage:
     python deploy.py --server <server_url> --file_to_deploy <file_path> --signing_address <email> [--pem_private_key_path <path>]
+
+Environment variables:
+    GITHUB_REPOSITORY: GitHub repository name (e.g., owner/repo)
+    GITHUB_SHA: Current commit SHA
+    GITHUB_REF: Current git reference (e.g., refs/heads/main)
 """
 import requests
 import os
@@ -47,12 +52,16 @@ def main():
     file_path = args.file_to_deploy
     file_name = os.path.basename(file_path)
 
+    # Get GitHub environment variables
+    github_repo = os.environ.get('GITHUB_REPOSITORY', '')
+    github_sha = os.environ.get('GITHUB_SHA', '')
+    github_ref = os.environ.get('GITHUB_REF', '')
+
     with open(file_path, 'rb') as file:
         file_content = file.read()
         # Sign the message
         fromheader = args.signing_address
         data = f"From: {fromheader}\n\n".encode()+file_content
-        # print(data)
         
         try:
             signature = dkim.sign(
@@ -71,7 +80,15 @@ def main():
                 'Content-Disposition': f'attachment; filename="{file_name}"'
             }
             
-            # print(headers)
+            # Add GitHub repository and commit information if available
+            if github_repo:
+                headers['X-GitHub-Repository'] = github_repo
+            if github_sha:
+                headers['X-GitHub-SHA'] = github_sha
+            if github_ref:
+                headers['X-GitHub-Ref'] = github_ref.replace('refs/heads/', '')
+            
+            print(f"Sending file with headers: {headers}")
             response = requests.post(url, data=file_content, headers=headers)
             print(f"Status code: {response.status_code}")
             print(f"Response: {response.text}")
