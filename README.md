@@ -23,7 +23,7 @@ jobs:
           fetch-depth: "0"
 
       - name: deploy
-        uses: monperrus/gha-dkim
+        uses: monperrus/gha-dkim@last
         with:
           server: "https://example.com/endpoint"
           file_to_deploy: "foo.tgz"
