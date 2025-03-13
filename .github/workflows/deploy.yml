@@ -15,7 +15,7 @@ jobs:
           fetch-depth: "0"
 
       - name: deploy
-        uses: monperrus/gha-dkim@last
+        uses: monperrus/gha-dkim@latest
         with:
           server: "https://www.monperrus.net/martin/cd.py"
           file_to_deploy: "deploy.py"
