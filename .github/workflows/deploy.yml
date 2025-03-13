@@ -1,0 +1,23 @@
+name: "gha-dkim deployer"
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: "0"
+
+      - name: deploy
+        uses: monperrus/gha-dkim
+        with:
+          server: "https://www.monperrus.net/martin/cd.py"
+          file_to_deploy: "deploy.py"
+          signing_address: "martindkim3@monperrus.net"
+          pem_private_key_path: "gha.pem"
