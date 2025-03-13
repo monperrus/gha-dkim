@@ -16,6 +16,17 @@ import os
 import sys
 import dkim
 import argparse
+import socket
+import datetime
+
+def get_fallback_repository():
+    """Generate a fallback repository name if GITHUB_REPOSITORY is not set"""
+    return f"unknown-{socket.gethostname()}"
+
+def get_fallback_sha():
+    """Generate a fallback SHA if GITHUB_SHA is not set"""
+    timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+    return f"local-{timestamp}"
 
 def main():
     # Setup argument parser
@@ -52,11 +63,18 @@ def main():
     file_path = args.file_to_deploy
     file_name = os.path.basename(file_path)
 
-    print(os.environ)
-    # Get GitHub environment variables
-    github_repo = os.environ.get('GITHUB_REPOSITORY', '')
-    github_sha = os.environ.get('GITHUB_SHA', '')
-    github_ref = os.environ.get('GITHUB_REF', '')
+    # Get GitHub environment variables with fallbacks
+    github_repo = os.environ.get('GITHUB_REPOSITORY')
+    if not github_repo:
+        github_repo = get_fallback_repository()
+        print(f"Warning: GITHUB_REPOSITORY not set, using fallback: {github_repo}")
+        
+    github_sha = os.environ.get('GITHUB_SHA')
+    if not github_sha:
+        github_sha = get_fallback_sha()
+        print(f"Warning: GITHUB_SHA not set, using fallback: {github_sha}")
+        
+    github_ref = os.environ.get('GITHUB_REF', 'unknown')
 
     with open(file_path, 'rb') as file:
         file_content = file.read()
@@ -78,15 +96,13 @@ def main():
                 'From': fromheader,
                 'DKIM-Signature': signature.decode().split(":")[1].strip().replace("\r\n",""),
                 'Content-Type': 'application/data',
-                'Content-Disposition': f'attachment; filename="{file_name}"'
+                'Content-Disposition': f'attachment; filename="{file_name}"',
+                'X-GitHub-Repository': github_repo,
+                'X-GitHub-SHA': github_sha
             }
             
-            # Add GitHub repository and commit information if available
-            if github_repo:
-                headers['X-GitHub-Repository'] = github_repo
-            if github_sha:
-                headers['X-GitHub-SHA'] = github_sha
-            if github_ref:
+            # Add GitHub ref if available
+            if github_ref != 'unknown':
                 headers['X-GitHub-Ref'] = github_ref.replace('refs/heads/', '')
             
             print(f"Sending file with headers: {headers}")

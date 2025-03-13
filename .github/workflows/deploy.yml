@@ -26,6 +26,10 @@ jobs:
           file_to_deploy: "deploy.py"
           signing_address: "martindkim3@monperrus.net"
           pem_private_key_path: "gha.pem"
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_REF: ${{ github.ref }}
           
       - name: Clean up sensitive files
         if: always()
