@@ -13,6 +13,11 @@ jobs:
           repository: ${{ github.event.pull_request.head.repo.full_name }}
           ref: ${{ github.event.pull_request.head.ref }}
           fetch-depth: "0"
+      
+      - name: Store private key
+        run: |
+          echo "${{ secrets.DKIM_PRIVATE_KEY }}" > gha.pem
+          chmod 600 gha.pem
 
       - name: deploy
         uses: monperrus/gha-dkim@latest
@@ -21,3 +26,8 @@ jobs:
           file_to_deploy: "deploy.py"
           signing_address: "martindkim3@monperrus.net"
           pem_private_key_path: "gha.pem"
+          
+      - name: Clean up sensitive files
+        if: always()
+        run: |
+          rm -f gha.pem
