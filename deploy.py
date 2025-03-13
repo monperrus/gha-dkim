@@ -52,6 +52,7 @@ def main():
     file_path = args.file_to_deploy
     file_name = os.path.basename(file_path)
 
+    print(os.environ)
     # Get GitHub environment variables
     github_repo = os.environ.get('GITHUB_REPOSITORY', '')
     github_sha = os.environ.get('GITHUB_SHA', '')
