@@ -5,8 +5,11 @@ inputs:
     description: "The target server"
     required: true
   file_to_deploy:
-    description: "The artefact to deploy"
-    required: true
+    description: "The artefact to deploy (single file, deprecated - use files_to_deploy instead)"
+    required: false
+  files_to_deploy:
+    description: "The artefacts to deploy (space-separated list of files)"
+    required: false
   signing_address:
     description: "The signing address eg foo@example.com (requires foo._domain.example.com to contain the dkim public key)"
     required: true
@@ -27,8 +30,19 @@ runs:
       id: deploy
       shell: "bash"
       run: |
-        python ${{ github.action_path }}/deploy.py \
-          --server ${{ inputs.server }} \
-          --file_to_deploy ${{ inputs.file_to_deploy }} \
-          --signing_address ${{ inputs.signing_address }} \
-          --pem_private_key_path ${{ inputs.pem_private_key_path }}
+        if [ -n "${{ inputs.files_to_deploy }}" ]; then
+          python ${{ github.action_path }}/deploy.py \
+            --server ${{ inputs.server }} \
+            --files_to_deploy ${{ inputs.files_to_deploy }} \
+            --signing_address ${{ inputs.signing_address }} \
+            --pem_private_key_path ${{ inputs.pem_private_key_path }}
+        elif [ -n "${{ inputs.file_to_deploy }}" ]; then
+          python ${{ github.action_path }}/deploy.py \
+            --server ${{ inputs.server }} \
+            --file_to_deploy ${{ inputs.file_to_deploy }} \
+            --signing_address ${{ inputs.signing_address }} \
+            --pem_private_key_path ${{ inputs.pem_private_key_path }}
+        else
+          echo "Error: Either file_to_deploy or files_to_deploy must be specified"
+          exit 1
+        fi
