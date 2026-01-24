@@ -36,8 +36,8 @@ def main():
     parser.add_argument('--file_to_deploy', help='Path to the file to deploy (deprecated, use --files_to_deploy)')
     parser.add_argument('--files_to_deploy', nargs='+', help='Paths to the files to deploy')
     parser.add_argument('--signing_address', required=True, help='Email address used for signing (e.g., user@example.com)')
-    parser.add_argument('--pem_private_key_path', default="gha.pem",
-                        help='Path to the PEM private key file for DKIM signing (default: gha.pem)')
+    parser.add_argument('--pem_private_key_path', help='Path to the PEM private key file for DKIM signing')
+    parser.add_argument('--pem_private_key', help='The PEM private key as a string')
 
     # Parse arguments
     args = parser.parse_args()
@@ -50,6 +50,20 @@ def main():
     else:
         print("Error: Either --file_to_deploy or --files_to_deploy must be specified")
         sys.exit(1)
+
+    # Determine the private key
+    private_key = None
+    if args.pem_private_key:
+        private_key = args.pem_private_key.encode()
+    elif args.pem_private_key_path:
+        if not os.path.exists(args.pem_private_key_path):
+            print(f"Error: Private key file not found: {args.pem_private_key_path}")
+            sys.exit(1)
+        with open(args.pem_private_key_path, 'rb') as f:
+            private_key = f.read()
+    else:
+        print("Error: Either --pem_private_key or --pem_private_key_path must be specified")
+        sys.exit(1)
     
     # Extract domain and selector from signing address
     email_parts = args.signing_address.split('@')
@@ -59,11 +73,6 @@ def main():
 
     domain = email_parts[1]
     selector = email_parts[0]
-
-    # Check if private key file exists
-    if not os.path.exists(args.pem_private_key_path):
-        print(f"Error: Private key file not found: {args.pem_private_key_path}")
-        sys.exit(1)
 
     # Check if all files to deploy exist
     for file_path in files_to_deploy:
@@ -103,7 +112,7 @@ def main():
                     message=data,
                     selector=selector.encode(),
                     domain=domain.encode(),
-                    privkey=open(args.pem_private_key_path).read().encode(),
+                    privkey=private_key,
                     include_headers=['From'],
                     canonicalize=(b'relaxed', b'relaxed')
                 )

@@ -16,8 +16,9 @@ inputs:
   pem_private_key_path:
     description: "Path to the PEM private key file for DKIM signing"
     required: false
-    default: "/tmp/a.pem"
-
+  pem_private_key:
+    description: "The PEM private key for DKIM signing (if not using a file)"
+    required: false
 runs:
   using: "composite"
   steps:
@@ -30,18 +31,25 @@ runs:
       id: deploy
       shell: "bash"
       run: |
+        EXTRA_ARGS=()
+        if [ -n "${{ inputs.pem_private_key }}" ]; then
+          EXTRA_ARGS=(--pem_private_key "${{ inputs.pem_private_key }}")
+        else
+          EXTRA_ARGS=(--pem_private_key_path "${{ inputs.pem_private_key_path }}")
+        fi
+
         if [ -n "${{ inputs.files_to_deploy }}" ]; then
           python ${{ github.action_path }}/deploy.py \
             --server ${{ inputs.server }} \
             --files_to_deploy ${{ inputs.files_to_deploy }} \
             --signing_address ${{ inputs.signing_address }} \
-            --pem_private_key_path ${{ inputs.pem_private_key_path }}
+            "${EXTRA_ARGS[@]}"
         elif [ -n "${{ inputs.file_to_deploy }}" ]; then
           python ${{ github.action_path }}/deploy.py \
             --server ${{ inputs.server }} \
             --file_to_deploy ${{ inputs.file_to_deploy }} \
             --signing_address ${{ inputs.signing_address }} \
-            --pem_private_key_path ${{ inputs.pem_private_key_path }}
+            "${EXTRA_ARGS[@]}"
         else
           echo "Error: Either file_to_deploy or files_to_deploy must be specified"
           exit 1

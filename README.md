@@ -28,9 +28,10 @@ jobs:
         uses: monperrus/gha-dkim@last
         with:
           server: "https://example.com/endpoint"
-          file_to_deploy: "foo.tgz"
           signing_address: "bob@example.com"
-          pem_private_key_path: "gha.pem"
+          # Use either pem_private_key_path or pem_private_key
+          # pem_private_key_path: "gha.pem"
+          pem_private_key: ${{ secrets.DKIM_PRIVATE_KEY }}
 ```
 
 ### Deploy multiple files
