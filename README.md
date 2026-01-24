@@ -1,6 +1,10 @@
 # gha-dkim
 A GitHub Action to to deploy a file to a server with dkim authentication.
 
+## Protocol Documentation
+
+For details on the HTTP DKIM deployment protocol, refer to [http-dkim-protocol.md](http-dkim-protocol.md).
+
 ## Example Usage:
 
 In `.github/workflows/deploy.yml`
@@ -19,10 +23,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-        with:
-          repository: ${{ github.event.pull_request.head.repo.full_name }}
-          ref: ${{ github.event.pull_request.head.ref }}
-          fetch-depth: "0"
 
       - name: deploy
         uses: monperrus/gha-dkim@last
@@ -34,7 +34,7 @@ jobs:
           pem_private_key: ${{ secrets.DKIM_PRIVATE_KEY }}
 ```
 
-### Deploy multiple files
+### Deploy multiple files at once
 
 ```yaml
 name: "gha-dkim deployer"
@@ -48,10 +48,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-        with:
-          repository: ${{ github.event.pull_request.head.repo.full_name }}
-          ref: ${{ github.event.pull_request.head.ref }}
-          fetch-depth: "0"
 
       - name: deploy
         uses: monperrus/gha-dkim@last
@@ -59,6 +55,6 @@ jobs:
           server: "https://example.com/endpoint"
           files_to_deploy: "foo.tgz bar.zip package.tar.gz"
           signing_address: "bob@example.com"
-          pem_private_key_path: "gha.pem"
+          pem_private_key: ${{ secrets.DKIM_PRIVATE_KEY }}              
 ```
 
