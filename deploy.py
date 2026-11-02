@@ -98,10 +98,22 @@ def main():
 
     github_ref = os.environ.get('GITHUB_REF', 'unknown')
 
+    # Name sent to the server: the repo-relative path ("provably-hardware/index.html"),
+    # which is the plain file name for a root-level file. A path that is absolute or
+    # leaves the working directory falls back to the base name.
+    def deploy_name(file_path):
+        rel = os.path.normpath(os.path.relpath(os.path.abspath(file_path))).replace(os.sep, "/")
+        return os.path.basename(file_path) if rel.startswith("../") or rel == ".." else rel
+
+    names = [deploy_name(p) for p in files_to_deploy]
+    duplicates = sorted({n for n in names if names.count(n) > 1})
+    if duplicates:
+        print(f"Error: several files would be deployed under the same name: {', '.join(duplicates)}")
+        sys.exit(1)
+
     # Process each file
     all_succeeded = True
-    for file_path in files_to_deploy:
-        file_name = os.path.basename(file_path)
+    for file_path, file_name in zip(files_to_deploy, names):
         print(f"\nDeploying file: {file_name}")
 
         with open(file_path, 'rb') as file:
