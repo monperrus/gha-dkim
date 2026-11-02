@@ -38,6 +38,9 @@ def main():
     parser.add_argument('--signing_address', required=True, help='Email address used for signing (e.g., user@example.com)')
     parser.add_argument('--pem_private_key_path', help='Path to the PEM private key file for DKIM signing')
     parser.add_argument('--pem_private_key', help='The PEM private key as a string')
+    parser.add_argument('--bind_headers', action='store_true',
+                        help='Also sign Content-Disposition and X-GitHub-Repository, so the signature '
+                             'binds the file name and repository (server must verify them)')
 
     # Parse arguments
     args = parser.parse_args()
@@ -105,7 +108,12 @@ def main():
             file_content = file.read()
             # Sign the message
             fromheader = args.signing_address
-            data = f"From: {fromheader}\n\n".encode()+file_content
+            # headers covered by the signature (h= tag)
+            signed_headers = {'From': fromheader}
+            if args.bind_headers:
+                signed_headers['Content-Disposition'] = f'attachment; filename="{file_name}"'
+                signed_headers['X-GitHub-Repository'] = github_repo
+            data = "".join(f"{k}: {v}\n" for k, v in signed_headers.items()).encode() + b"\n" + file_content
 
             try:
                 signature = dkim.sign(
@@ -113,13 +121,13 @@ def main():
                     selector=selector.encode(),
                     domain=domain.encode(),
                     privkey=private_key,
-                    include_headers=['From'],
+                    include_headers=[k.encode() for k in signed_headers],
                     canonicalize=(b'relaxed', b'relaxed')
                 )
 
                 headers = {
                     'From': fromheader,
-                    'DKIM-Signature': signature.decode().split(":")[1].strip().replace("\r\n",""),
+                    'DKIM-Signature': signature.decode().split(":", 1)[1].strip().replace("\r\n",""),
                     'Content-Type': 'application/data',
                     'Content-Disposition': f'attachment; filename="{file_name}"',
                     'X-GitHub-Repository': github_repo,

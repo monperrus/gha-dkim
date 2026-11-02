@@ -18,6 +18,10 @@ The signing address (e.g., `user@example.com`). This is used to identify the sen
 - `Content-Type`: Must be `application/data`.
 - `Content-Disposition`: Must be `attachment; filename="<file_name>"`, where `<file_name>` is the name of the file being deployed.
 
+### Binding the file name and repository (optional)
+
+By default the signature covers only `From` and the body. With `bind_headers: "true"` (`--bind_headers`), the client also lists `Content-Disposition` and `X-GitHub-Repository` in the `h=` tag, so the signature binds the file name and repository to the body: a captured request cannot be replayed under another name. A server that verifies the signature over the headers listed in `h=` supports this without further change.
+
 ### Body
 
 The body of the request must be the raw content of the file being deployed.

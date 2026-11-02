@@ -19,6 +19,10 @@ inputs:
   pem_private_key:
     description: "The PEM private key for DKIM signing (if not using a file)"
     required: false
+  bind_headers:
+    description: "Set to 'true' to also sign Content-Disposition and X-GitHub-Repository (binds file name and repository to the signature; the server must verify them). Default: off."
+    required: false
+    default: "false"
 runs:
   using: "composite"
   steps:
@@ -36,6 +40,10 @@ runs:
           EXTRA_ARGS=(--pem_private_key "${{ inputs.pem_private_key }}")
         else
           EXTRA_ARGS=(--pem_private_key_path "${{ inputs.pem_private_key_path }}")
+        fi
+
+        if [ "${{ inputs.bind_headers }}" = "true" ]; then
+          EXTRA_ARGS+=(--bind_headers)
         fi
 
         if [ -n "${{ inputs.files_to_deploy }}" ]; then

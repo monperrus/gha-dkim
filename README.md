@@ -34,6 +34,10 @@ jobs:
           pem_private_key: ${{ secrets.DKIM_PRIVATE_KEY }}
 ```
 
+### Bind file name and repository to the signature
+
+Add `bind_headers: "true"` to `with:` so the signature also covers `Content-Disposition` and `X-GitHub-Repository` (the server must verify headers listed in `h=`; default off).
+
 ### Deploy multiple files at once
 
 ```yaml
