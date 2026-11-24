@@ -26,6 +26,7 @@ jobs:
           file_to_deploy: "deploy.py"
           signing_address: "martindkim3@monperrus.net"
           pem_private_key_path: "gha.pem"
+          bind_headers: "true"
         env:
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_SHA: ${{ github.sha }}
